@@ -11,11 +11,44 @@ import {
   AlertTriangle,
 } from "lucide-react"
 
+// Type definitions
+type Deal = {
+  id: string
+  name: string
+  company_name: string | null
+  engagement_type: string | null
+  client_industry: string | null
+  client_size: string | null
+  project_value: number | null
+  budget: number | null
+  hours_budgeted: number | null
+  win_likelihood: number | null
+  status: string
+  start_date: string | null
+  end_date: string | null
+  created_at: string
+  stage: { name: string; color: string; is_terminal: boolean } | null
+  lead_partner: { full_name: string } | null
+}
+
+type TimeSummary = {
+  deal_id: string
+  total_hours: number
+  billable_hours: number
+}
+
+type TeamTimeLog = {
+  user_id: string
+  hours: number
+  log_type: string
+  user: { id: string; full_name: string; role: string } | null
+}
+
 export default async function ReportsPage() {
   const supabase = await createClient()
 
   // Fetch active deals with analytics
-  const { data: deals } = await supabase
+  const { data: dealsRaw } = await supabase
     .from("deals")
     .select(`
       id, name, company_name, engagement_type, client_industry, client_size,
@@ -24,23 +57,26 @@ export default async function ReportsPage() {
       stage:stages(name, color, is_terminal),
       lead_partner:profiles!deals_lead_partner_id_fkey(full_name)
     `)
+  const deals = dealsRaw as Deal[] | null
 
   // Fetch time summaries
-  const { data: timeSummary } = await supabase
+  const { data: timeSummaryRaw } = await supabase
     .from("deal_time_summary")
-    .select("*")
+    .select("deal_id, total_hours, billable_hours")
+  const timeSummary = timeSummaryRaw as TimeSummary[] | null
 
   // Fetch team utilization (last 30 days)
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const { data: teamTime } = await supabase
+  const { data: teamTimeRaw } = await supabase
     .from("time_logs")
     .select(`
       user_id, hours, log_type,
       user:profiles(id, full_name, role)
     `)
     .gte("date", thirtyDaysAgo.toISOString().split("T")[0])
+  const teamTime = teamTimeRaw as TeamTimeLog[] | null
 
   // Calculate metrics
   const activeDeals = deals?.filter((d) => d.status === "active") || []
