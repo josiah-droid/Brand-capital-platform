@@ -3,6 +3,38 @@ import { Briefcase, CheckSquare, Clock, TrendingUp, Target, AlertTriangle } from
 import { formatCurrency, formatHours } from "@/lib/utils"
 import Link from "next/link"
 
+// Type definitions for Supabase queries
+type DealBasic = {
+  project_value: number | null
+  win_likelihood: number | null
+  hours_budgeted: number | null
+}
+
+type DealWithRelations = {
+  id: string
+  name: string
+  company_name: string | null
+  engagement_type: string | null
+  project_value: number | null
+  win_likelihood: number | null
+  stage: { name: string; color: string } | null
+  lead_partner: { full_name: string } | null
+}
+
+type PipelineStage = {
+  stage_id: string
+  stage_name: string
+  color: string
+  deal_count: number
+}
+
+type DealTimeSummary = {
+  deal_id: string
+  deal_name: string
+  total_hours: number
+  hours_budgeted: number | null
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
 
@@ -10,18 +42,20 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch pipeline summary
-  const { data: pipelineSummary } = await supabase
+  const { data: pipelineSummaryRaw } = await supabase
     .from("pipeline_summary")
     .select("*")
     .order("position")
+  const pipelineSummary = pipelineSummaryRaw as PipelineStage[] | null
 
   // Fetch recent projects
-  const { data: recentDeals } = await supabase
+  const { data: recentDealsRaw } = await supabase
     .from("deals")
-    .select("*, stage:stages(*), lead_partner:profiles!deals_lead_partner_id_fkey(full_name)")
+    .select("id, name, company_name, engagement_type, project_value, win_likelihood, stage:stages(name, color), lead_partner:profiles!deals_lead_partner_id_fkey(full_name)")
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .limit(5)
+  const recentDeals = recentDealsRaw as DealWithRelations[] | null
 
   // Fetch open tasks count
   const { count: openTasksCount } = await supabase
@@ -42,10 +76,11 @@ export default async function DashboardPage() {
   const hoursThisWeek = (weeklyTimeLogs as { hours: number }[] | null)?.reduce((sum, log) => sum + (log.hours || 0), 0) || 0
 
   // Calculate totals from deals directly (pipeline_summary may use old field)
-  const { data: activeDeals } = await supabase
+  const { data: activeDealsRaw } = await supabase
     .from("deals")
     .select("project_value, win_likelihood, hours_budgeted")
     .eq("status", "active")
+  const activeDeals = activeDealsRaw as DealBasic[] | null
 
   const totalProjects = activeDeals?.length || 0
   const totalPipelineValue = activeDeals?.reduce(
@@ -58,9 +93,10 @@ export default async function DashboardPage() {
   ) || 0
 
   // Get projects with budget warnings
-  const { data: dealTimeSummary } = await supabase
+  const { data: dealTimeSummaryRaw } = await supabase
     .from("deal_time_summary")
     .select("deal_id, deal_name, total_hours, hours_budgeted")
+  const dealTimeSummary = dealTimeSummaryRaw as DealTimeSummary[] | null
 
   const overBudgetProjects = dealTimeSummary?.filter(
     (d) => d.hours_budgeted && d.hours_budgeted > 0 && d.total_hours > d.hours_budgeted
