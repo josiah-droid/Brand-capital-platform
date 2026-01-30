@@ -39,7 +39,7 @@ export default async function DashboardPage() {
     .select("hours")
     .gte("date", startOfWeek.toISOString().split("T")[0])
 
-  const hoursThisWeek = weeklyTimeLogs?.reduce((sum, log) => sum + (log.hours || 0), 0) || 0
+  const hoursThisWeek = (weeklyTimeLogs as { hours: number }[] | null)?.reduce((sum, log) => sum + (log.hours || 0), 0) || 0
 
   // Calculate totals from deals directly (pipeline_summary may use old field)
   const { data: activeDeals } = await supabase
