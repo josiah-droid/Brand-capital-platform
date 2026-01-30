@@ -4,6 +4,16 @@ import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 
+type UserProfile = {
+  id: string
+  full_name: string | null
+  email: string | null
+  avatar_url: string | null
+  role: "admin" | "partner" | "associate"
+  company_id: string | null
+  company: { name: string } | null
+}
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -20,11 +30,12 @@ export default async function DashboardLayout({
   }
 
   // Fetch user profile with company
-  const { data: profile } = await supabase
+  const { data: profileRaw } = await supabase
     .from("profiles")
-    .select("*, company:companies(*)")
+    .select("id, full_name, email, avatar_url, role, company_id, company:companies(name)")
     .eq("id", user.id)
     .single()
+  const profile = profileRaw as UserProfile | null
 
   // Redirect to onboarding if user has no company
   if (!profile?.company_id) {
