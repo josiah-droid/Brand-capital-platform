@@ -3,10 +3,13 @@
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { LogOut, Menu, User, Search, Command } from "lucide-react"
-import type { Profile } from "@/types/database"
 
 interface HeaderProps {
-  user: Profile | null
+  user: {
+    full_name: string | null
+    avatar_url: string | null
+    role: string
+  } | null
 }
 
 export function Header({ user }: HeaderProps) {
