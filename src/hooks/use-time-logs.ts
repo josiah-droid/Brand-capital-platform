@@ -29,6 +29,17 @@ export function useTimeLogs(filters?: { deal_id?: string; user_id?: string; star
   return useQuery({
     queryKey: ["time-logs", filters],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single()
+
+      if (!profile?.company_id) return []
+
       let query = supabase
         .from("time_logs")
         .select(`
@@ -37,6 +48,7 @@ export function useTimeLogs(filters?: { deal_id?: string; user_id?: string; star
           deal:deals(id, name, company_name),
           task:tasks(id, title)
         `)
+        .eq("company_id", profile.company_id)
         .order("date", { ascending: false })
         .order("created_at", { ascending: false })
 
@@ -158,9 +170,21 @@ export function useDealTimeTotals() {
   return useQuery({
     queryKey: ["deal-time-totals"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single()
+
+      if (!profile?.company_id) return {}
+
       const { data, error } = await supabase
         .from("deal_time_summary")
         .select("*")
+        .eq("company_id", profile.company_id)
 
       if (error) throw error
 

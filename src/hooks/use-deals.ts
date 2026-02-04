@@ -52,6 +52,17 @@ export function useDeals(filters?: { stage_id?: string; status?: DealStatus }) {
   return useQuery({
     queryKey: ["deals", filters],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single()
+
+      if (!profile?.company_id) return []
+
       let query = supabase
         .from("deals")
         .select(`
@@ -60,6 +71,7 @@ export function useDeals(filters?: { stage_id?: string; status?: DealStatus }) {
           lead_partner:profiles!deals_lead_partner_id_fkey(id, full_name, avatar_url),
           created_by:profiles!deals_created_by_id_fkey(id, full_name)
         `)
+        .eq("company_id", profile.company_id)
         .order("created_at", { ascending: false })
 
       if (filters?.stage_id) {
@@ -231,9 +243,21 @@ export function useStages() {
   return useQuery({
     queryKey: ["stages"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single()
+
+      if (!profile?.company_id) return []
+
       const { data, error } = await supabase
         .from("stages")
         .select("*")
+        .eq("company_id", profile.company_id)
         .order("position")
 
       if (error) throw error
@@ -248,9 +272,21 @@ export function useUsers() {
   return useQuery({
     queryKey: ["users"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single()
+
+      if (!profile?.company_id) return []
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
+        .eq("company_id", profile.company_id)
         .eq("is_active", true)
         .order("full_name")
 

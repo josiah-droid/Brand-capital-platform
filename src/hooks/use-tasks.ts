@@ -32,6 +32,17 @@ export function useTasks(filters?: { deal_id?: string; assignee_id?: string; sta
   return useQuery({
     queryKey: ["tasks", filters],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single()
+
+      if (!profile?.company_id) return []
+
       let query = supabase
         .from("tasks")
         .select(`
@@ -40,6 +51,7 @@ export function useTasks(filters?: { deal_id?: string; assignee_id?: string; sta
           assignee:profiles!tasks_assignee_id_fkey(id, full_name, avatar_url),
           created_by:profiles!tasks_created_by_id_fkey(id, full_name)
         `)
+        .eq("company_id", profile.company_id)
         .order("due_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false })
 
