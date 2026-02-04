@@ -39,6 +39,24 @@ The **Brand Capital Platform** is a modern web application built for managing br
 
 4. Open [http://localhost:3000](http://localhost:3000) with your browser.
 
+## Deployment
+
+This project is configured for **Git-based deployment** via Vercel.
+
+### How it Works
+1.  **Push Changes**: When you push to the `main` branch, Vercel automatically detects the changes.
+2.  **Build**: Vercel runs the build process (`npm run build`).
+3.  **Preview**: Pull requests trigger Preview deployments.
+4.  **Production**: Merges to `main` trigger Production deployments.
+
+### Setup (One-Time)
+1.  Go to your Vercel Project Dashboard.
+2.  Navigate to **Settings** > **Git**.
+3.  Click **Connect Git Repository**.
+4.  Select `josiah-droid/Brand-capital-platform`.
+
+Now, every `git push` will deploy your site!
+
 ## Scripts
 
 - `npm run dev`: Runs the development server.

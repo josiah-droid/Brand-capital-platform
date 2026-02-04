@@ -1,7 +1,14 @@
 import Link from "next/link"
 import { LoginForm } from "@/components/auth/login-form"
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: { next?: string }
+}) {
+  const next = searchParams.next
+  const signupHref = next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm">
@@ -19,7 +26,7 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-muted-foreground mt-6">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary hover:underline">
+          <Link href={signupHref} className="text-primary hover:underline">
             Sign up
           </Link>
         </p>

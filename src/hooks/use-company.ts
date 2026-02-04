@@ -195,6 +195,10 @@ export function useInviteMember() {
 
       if (!profile?.company_id) throw new Error("No company found")
 
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      const expiresAt = new Date()
+      expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
+
       const { data, error } = await supabase
         .from("company_invitations")
         .insert({
@@ -202,6 +206,8 @@ export function useInviteMember() {
           email: email.toLowerCase().trim(),
           role,
           invited_by_id: user.id,
+          token,
+          expires_at: expiresAt.toISOString(),
         })
         .select()
         .single()
@@ -213,7 +219,8 @@ export function useInviteMember() {
         throw error
       }
 
-      return data
+      const inviteLink = `${window.location.origin}/join/${token}`
+      return { ...data, inviteLink }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["company-invitations"] })
@@ -299,6 +306,56 @@ export function useRegenerateInviteCode() {
 
       if (error) throw error
       return data.invite_code
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["company"] })
+    },
+  })
+}
+
+export function useAcceptInvitation() {
+  const queryClient = useQueryClient()
+  const supabase = createClient()
+
+  return useMutation({
+    mutationFn: async (token: string) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      // 1. Find the invitation
+      const { data: invitation, error: inviteError } = await supabase
+        .from("company_invitations")
+        .select("*, company:companies(name)")
+        .eq("token", token)
+        .eq("status", "pending")
+        .single()
+
+      if (inviteError || !invitation) {
+        throw new Error("Invalid or expired invitation")
+      }
+
+      if (new Date(invitation.expires_at) < new Date()) {
+        throw new Error("Invitation has expired")
+      }
+
+      // 2. Add user to company
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          company_id: invitation.company_id,
+          role: invitation.role,
+        })
+        .eq("id", user.id)
+
+      if (profileError) throw profileError
+
+      // 3. Mark invitation as accepted
+      await supabase
+        .from("company_invitations")
+        .update({ status: "accepted" })
+        .eq("id", invitation.id)
+
+      return invitation.company
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["company"] })

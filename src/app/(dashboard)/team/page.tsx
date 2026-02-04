@@ -283,6 +283,8 @@ function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
   const [email, setEmail] = useState("")
   const [role, setRole] = useState<UserRole>("associate")
   const [error, setError] = useState<string | null>(null)
+  const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const inviteMember = useInviteMember()
 
@@ -296,71 +298,122 @@ function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
     }
 
     try {
-      await inviteMember.mutateAsync({ email: email.trim(), role })
-      onClose()
-      setEmail("")
-      setRole("associate")
+      const result = await inviteMember.mutateAsync({ email: email.trim(), role })
+      setInviteLink(result.inviteLink)
     } catch (err: any) {
       setError(err.message || "Failed to send invitation")
     }
   }
 
+  const handleClose = () => {
+    onClose()
+    setEmail("")
+    setRole("associate")
+    setInviteLink(null)
+    setCopied(false)
+  }
+
+  const copyLink = () => {
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Invite Team Member">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-            {error}
+    <Modal isOpen={isOpen} onClose={handleClose} title="Invite Team Member">
+      {inviteLink ? (
+        <div className="space-y-4">
+          <div className="bg-green-50 text-green-700 p-4 rounded-md flex items-center gap-2">
+            <Check className="w-5 h-5" />
+            <p>Invitation created successfully!</p>
           </div>
-        )}
 
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Email Address <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="colleague@company.com"
-            required
-          />
-        </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Share this link</label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono break-all border">
+                {inviteLink}
+              </code>
+              <button
+                onClick={copyLink}
+                className="p-2 hover:bg-gray-100 rounded-md text-gray-500 hover:text-gray-700 border"
+                title="Copy link"
+              >
+                {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Send this link to <strong>{email}</strong> manually if they don't receive an email.
+            </p>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as UserRole)}
-            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="associate">Associate</option>
-            <option value="partner">Partner</option>
-            <option value="admin">Admin</option>
-          </select>
-          <p className="text-xs text-muted-foreground mt-1">
-            Admins can manage team and settings. Partners can manage deals. Associates can view and log time.
-          </p>
+          <div className="flex justify-end pt-4">
+            <button
+              onClick={handleClose}
+              className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Done
+            </button>
+          </div>
         </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+              {error}
+            </div>
+          )}
 
-        <div className="flex justify-end gap-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium border rounded-md hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={inviteMember.isPending}
-            className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
-          >
-            {inviteMember.isPending ? "Sending..." : "Send Invitation"}
-          </button>
-        </div>
-      </form>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Email Address <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="colleague@company.com"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as UserRole)}
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="associate">Associate</option>
+              <option value="partner">Partner</option>
+              <option value="admin">Admin</option>
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Admins can manage team and settings. Partners can manage deals. Associates can view and log time.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-2 text-sm font-medium border rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={inviteMember.isPending}
+              className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            >
+              {inviteMember.isPending ? "Creating Link..." : "Create Invite Link"}
+            </button>
+          </div>
+        </form>
+      )}
     </Modal>
   )
 }
