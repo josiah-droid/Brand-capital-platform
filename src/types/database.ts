@@ -12,6 +12,7 @@ export type EngagementType = 'project' | 'retainer' | 'pitch'
 export type ClientSize = 'startup' | 'small' | 'medium' | 'enterprise'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'completed'
+export type TaskPhase = 'Strategy' | 'Creative' | 'Production' | 'Revisions' | 'Admin' | 'General'
 export type TimeLogType = 'billable' | 'non_billable' | 'internal'
 export type InvitationStatus = 'pending' | 'accepted' | 'expired'
 
@@ -369,6 +370,7 @@ export interface Database {
           due_date: string | null
           completed_at: string | null
           estimated_hours: number | null
+          phase: string | null
           company_id: string | null
           created_at: string
           updated_at: string
@@ -385,6 +387,7 @@ export interface Database {
           due_date?: string | null
           completed_at?: string | null
           estimated_hours?: number | null
+          phase?: string | null
           company_id?: string | null
           created_at?: string
           updated_at?: string
@@ -401,6 +404,7 @@ export interface Database {
           due_date?: string | null
           completed_at?: string | null
           estimated_hours?: number | null
+          phase?: string | null
           company_id?: string | null
           created_at?: string
           updated_at?: string

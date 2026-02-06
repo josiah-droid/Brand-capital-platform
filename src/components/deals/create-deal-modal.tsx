@@ -22,11 +22,8 @@ export function CreateDealModal({ isOpen, onClose }: CreateDealModalProps) {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
   const [clientIndustry, setClientIndustry] = useState("")
-  const [clientSize, setClientSize] = useState<ClientSize | "">("")
   const [deliverables, setDeliverables] = useState("")
-  const [winLikelihood, setWinLikelihood] = useState("50")
   const [accountLeadId, setAccountLeadId] = useState("")
-  const [dealSource, setDealSource] = useState("")
   const [error, setError] = useState<string | null>(null)
 
   const { data: stages } = useStages()
@@ -70,11 +67,8 @@ export function CreateDealModal({ isOpen, onClose }: CreateDealModalProps) {
         start_date: startDate || undefined,
         end_date: endDate || undefined,
         client_industry: clientIndustry.trim() || undefined,
-        client_size: clientSize || undefined,
         deliverables: deliverables.trim() || undefined,
-        win_likelihood: parseInt(winLikelihood),
         lead_partner_id: accountLeadId || undefined,
-        deal_source: dealSource.trim() || undefined,
       })
 
       // Reset form
@@ -89,11 +83,8 @@ export function CreateDealModal({ isOpen, onClose }: CreateDealModalProps) {
       setStartDate("")
       setEndDate("")
       setClientIndustry("")
-      setClientSize("")
       setDeliverables("")
-      setWinLikelihood("50")
       setAccountLeadId("")
-      setDealSource("")
       onClose()
     } catch (err: any) {
       setError(err.message || "Failed to create project")
@@ -232,79 +223,36 @@ export function CreateDealModal({ isOpen, onClose }: CreateDealModalProps) {
           </div>
         </div>
 
-        {/* Client Info */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Client Industry</label>
-            <input
-              type="text"
-              value={clientIndustry}
-              onChange={(e) => setClientIndustry(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Technology, Healthcare, etc."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Client Size</label>
-            <select
-              value={clientSize}
-              onChange={(e) => setClientSize(e.target.value as ClientSize | "")}
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">Select size...</option>
-              <option value="startup">Startup</option>
-              <option value="small">Small Business</option>
-              <option value="medium">Medium Business</option>
-              <option value="enterprise">Enterprise</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Account Lead & Win Likelihood */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Account Lead</label>
-            <select
-              value={accountLeadId}
-              onChange={(e) => setAccountLeadId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">Unassigned</option>
-              {teamLeads.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Win Likelihood ({winLikelihood}%)
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={winLikelihood}
-              onChange={(e) => setWinLikelihood(e.target.value)}
-              className="w-full"
-            />
-          </div>
-        </div>
-
-        {/* Source */}
+        {/* Client Industry */}
         <div>
-          <label className="block text-sm font-medium mb-1">Lead Source</label>
+          <label className="block text-sm font-medium mb-1">Client Industry</label>
           <input
             type="text"
-            value={dealSource}
-            onChange={(e) => setDealSource(e.target.value)}
+            value={clientIndustry}
+            onChange={(e) => setClientIndustry(e.target.value)}
             className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="Referral, Website, Conference, etc."
+            placeholder="Technology, Healthcare, etc."
           />
         </div>
+
+        {/* Account Lead */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Account Lead</label>
+          <select
+            value={accountLeadId}
+            onChange={(e) => setAccountLeadId(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Unassigned</option>
+            {teamLeads.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.full_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+
 
         {/* Description */}
         <div>
