@@ -17,9 +17,11 @@ import {
     User,
     AlertTriangle,
     TrendingUp,
-    DollarSign
+    DollarSign,
+    LayoutTemplate
 } from "lucide-react"
 import { Modal } from "@/components/ui/modal"
+import { ApplyTemplateModal } from "@/components/templates/apply-template-modal"
 
 export default function DealOperationsPage() {
     const params = useParams()
@@ -33,6 +35,7 @@ export default function DealOperationsPage() {
 
     const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
     const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
+    const [isTemplateOpen, setIsTemplateOpen] = useState(false)
 
     if (dealLoading || tasksLoading) {
         return (
@@ -181,13 +184,22 @@ export default function DealOperationsPage() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-medium">Tasks by Phase</h2>
-                    <button
-                        onClick={() => setIsAddTaskOpen(true)}
-                        className="px-3 py-1.5 bg-primary text-white rounded-md text-sm hover:bg-primary/90 flex items-center gap-1"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Task
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setIsTemplateOpen(true)}
+                            className="px-3 py-1.5 border border-primary text-primary rounded-md text-sm hover:bg-primary/5 flex items-center gap-1"
+                        >
+                            <LayoutTemplate className="w-4 h-4" />
+                            Use Template
+                        </button>
+                        <button
+                            onClick={() => setIsAddTaskOpen(true)}
+                            className="px-3 py-1.5 bg-primary text-white rounded-md text-sm hover:bg-primary/90 flex items-center gap-1"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Task
+                        </button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
@@ -247,6 +259,14 @@ export default function DealOperationsPage() {
                 dealId={dealId}
                 defaultPhase={selectedPhase || "General"}
                 users={users || []}
+            />
+
+            {/* Apply Template Modal */}
+            <ApplyTemplateModal
+                isOpen={isTemplateOpen}
+                onClose={() => setIsTemplateOpen(false)}
+                dealId={dealId}
+                dealStartDate={deal.start_date || undefined}
             />
         </div>
     )
