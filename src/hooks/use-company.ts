@@ -100,27 +100,44 @@ export function useCreateCompany() {
 
   return useMutation({
     mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
+      console.log("[CreateCompany] Starting company creation...")
+
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not authenticated")
+      if (!user) {
+        console.error("[CreateCompany] Not authenticated")
+        throw new Error("Not authenticated")
+      }
+      console.log("[CreateCompany] User authenticated:", user.id)
 
       // Create company
+      console.log("[CreateCompany] Creating company:", name)
       const { data: company, error: companyError } = await supabase
         .from("companies")
         .insert({ name, slug })
         .select()
         .single()
 
-      if (companyError) throw companyError
+      if (companyError) {
+        console.error("[CreateCompany] Company creation failed:", companyError)
+        throw companyError
+      }
+      console.log("[CreateCompany] Company created:", company.id)
 
       // Update user profile with company_id and make them admin
+      console.log("[CreateCompany] Updating profile with company_id...")
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ company_id: company.id, role: "admin" })
         .eq("id", user.id)
 
-      if (profileError) throw profileError
+      if (profileError) {
+        console.error("[CreateCompany] Profile update failed:", profileError)
+        throw profileError
+      }
+      console.log("[CreateCompany] Profile updated successfully")
 
       // Create default stages for the company (brand positioning workflow)
+      console.log("[CreateCompany] Creating default stages...")
       const defaultStages = [
         { name: "Inquiry", description: "New leads and inquiries", color: "#3B82F6", position: 1, is_terminal: false },
         { name: "Proposal", description: "Scoping and proposal sent", color: "#8B5CF6", position: 2, is_terminal: false },
@@ -129,10 +146,18 @@ export function useCreateCompany() {
         { name: "Lost", description: "Did not proceed", color: "#6B7280", position: 5, is_terminal: true },
       ]
 
-      await supabase.from("stages").insert(
+      const { error: stagesError } = await supabase.from("stages").insert(
         defaultStages.map((stage) => ({ ...stage, company_id: company.id }))
       )
 
+      if (stagesError) {
+        console.error("[CreateCompany] Stages creation failed:", stagesError)
+        // Don't throw - stages are not critical
+      } else {
+        console.log("[CreateCompany] Stages created successfully")
+      }
+
+      console.log("[CreateCompany] Company creation complete!")
       return company
     },
     onSuccess: () => {
