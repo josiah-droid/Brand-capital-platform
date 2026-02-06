@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         }
 
         const { data, error } = await resend.emails.send({
-            from: 'Brand Capital <onboarding@resend.dev>', // Update this if they have a domain
+            from: 'Brand Capital <noreply@brandcapital.dev>',
             to: [email],
             subject: `You've been invited to join ${companyName} on Brand Capital`,
             html: `
