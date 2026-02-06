@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAcceptInvitation } from "@/hooks/use-company"
 import { createClient } from "@/lib/supabase/client"
@@ -13,14 +13,18 @@ export default function JoinPage({ params }: { params: { token: string } }) {
     const [errorDetails, setErrorDetails] = useState<string>("")
     const [companyName, setCompanyName] = useState<string>("")
 
+    const processingRef = useRef(false)
+
     useEffect(() => {
+        if (processingRef.current) return
+        processingRef.current = true
+
         const verifyAndJoin = async () => {
             const supabase = createClient()
             const { data: { user } } = await supabase.auth.getUser()
 
             if (!user) {
                 // Redirect to login but preserve the destination
-                // We use encodeURIComponent to ensure the full path is preserved
                 const nextUrl = encodeURIComponent(`/join/${params.token}`)
                 router.push(`/login?next=${nextUrl}`)
                 return
@@ -36,13 +40,23 @@ export default function JoinPage({ params }: { params: { token: string } }) {
                     router.push("/dashboard")
                 }, 2000)
             } catch (err: any) {
+                // If it failed, we should allow retrying in some cases, but for now 
+                // we assume terminal failure or that the user can refresh.
                 setStatus("error")
                 setErrorDetails(err.message || "Failed to join company")
             }
         }
 
         verifyAndJoin()
-    }, [params.token, router, acceptInvitation])
+
+        // Cleanup function to allow re-running if component unmounts and remounts 
+        // with different params (though params.token is key)
+        return () => {
+            // We intentionally don't reset processingRef here to strictly prevent 
+            // double-invocation in Strict Mode immediately. 
+            // If the user navigates away and back, the component instance is fresh.
+        }
+    }, [params.token, router]) // Removed acceptInvitation from dependencies to rely on stable hook behavior
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
