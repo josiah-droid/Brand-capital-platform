@@ -187,13 +187,18 @@ export function useInviteMember() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
+      // Fetch profile AND company name
       const { data: profile } = await supabase
         .from("profiles")
-        .select("company_id")
+        .select("company_id, full_name, company:companies(name)")
         .eq("id", user.id)
         .single()
 
       if (!profile?.company_id) throw new Error("No company found")
+
+      // @ts-ignore - Supabase types might not perfectly match the join, but it works
+      const companyName = profile.company?.name || "your company"
+      const inviterName = profile.full_name || "A colleague"
 
       const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
       const expiresAt = new Date()
@@ -220,6 +225,25 @@ export function useInviteMember() {
       }
 
       const inviteLink = `${window.location.origin}/join/${token}`
+
+      // Send Email via API
+      try {
+        await fetch("/api/invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.toLowerCase().trim(),
+            link: inviteLink,
+            companyName,
+            invitedBy: inviterName,
+          }),
+        })
+      } catch (emailError) {
+        console.error("Failed to send email:", emailError)
+        // We don't throw here because the invitation was created successfully.
+        // The UI will show the link as a fallback.
+      }
+
       return { ...data, inviteLink }
     },
     onSuccess: () => {

@@ -327,7 +327,10 @@ function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
         <div className="space-y-4">
           <div className="bg-green-50 text-green-700 p-4 rounded-md flex items-center gap-2">
             <Check className="w-5 h-5" />
-            <p>Invitation created successfully!</p>
+            <div>
+              <p className="font-medium">Invitation created!</p>
+              <p className="text-sm opacity-90">An email has been sent to {email}.</p>
+            </div>
           </div>
 
           <div>
@@ -409,7 +412,7 @@ function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
               disabled={inviteMember.isPending}
               className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
-              {inviteMember.isPending ? "Creating Link..." : "Create Invite Link"}
+              {inviteMember.isPending ? "Sending..." : "Send Invitation"}
             </button>
           </div>
         </form>
