@@ -11,6 +11,7 @@ import {
   Users,
   PieChart,
   Briefcase,
+  ClipboardList,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { UserRole } from "@/types/database"
@@ -25,6 +26,12 @@ const navigation = [
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    roles: ["admin", "partner", "associate"],
+  },
+  {
+    name: "My Work",
+    href: "/my-work",
+    icon: ClipboardList,
     roles: ["admin", "partner", "associate"],
   },
   {
