@@ -12,6 +12,7 @@ interface CreateTaskInput {
   priority?: TaskPriority
   due_date?: string
   estimated_hours?: number
+  phase?: string
 }
 
 interface UpdateTaskInput {
@@ -24,6 +25,7 @@ interface UpdateTaskInput {
   priority?: TaskPriority
   due_date?: string
   estimated_hours?: number
+  phase?: string
 }
 
 export function useTasks(filters?: { deal_id?: string; assignee_id?: string; status?: TaskStatus }) {
